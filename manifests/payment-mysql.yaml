@@ -1,0 +1,54 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: paymentdb
+spec:
+  ports:
+  - port: 3306
+  selector:
+    app: paymentdb
+  clusterIP: None
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: paymentdb
+spec:
+  selector:
+    matchLabels:
+      app: paymentdb
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: paymentdb
+    spec:
+      containers:
+      - image: mysql:5.6
+        name: mysql
+        env:
+          # Use secret in real usage
+        - name: MYSQL_ROOT_PASSWORD
+          value: "mypass1234"
+        - name: MYSQL_USER
+          value: "springuser"
+        - name: MYSQL_PASSWORD
+          value: "mypass1234"
+        - name: MYSQL_DATABASE
+          value: "paymentdb"
+        ports:
+        - containerPort: 3306
+          name: mysql
+        volumeMounts:
+        - name: mysql-persistent-storage
+          mountPath: /var/lib/mysql
+      volumes:
+      - name: mysql-persistent-storage
+        persistentVolumeClaim:
+          claimName: mysql-pv-claim
+      tolerations:
+      - key: ""
+        operator: "Exists"
+        effect:
